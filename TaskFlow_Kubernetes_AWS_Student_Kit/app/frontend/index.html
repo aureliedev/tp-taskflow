@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TaskFlow</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#172033}
+header{background:#18243a;color:#fff;padding:25px 7%} main{max-width:1000px;margin:30px auto;padding:0 20px}
+.card{background:#fff;border-radius:14px;padding:22px;margin-bottom:20px;box-shadow:0 8px 30px #14203a14}
+form{display:grid;gap:12px}input,textarea,select,button{font:inherit;padding:11px;border-radius:8px;border:1px solid #d8deea}
+button{cursor:pointer;background:#315efb;color:white;border:0}.delete{background:#d63c4b!important}
+.task{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;border-top:1px solid #edf0f5;padding:15px 0}
+small{color:#697386}@media(max-width:700px){.task{grid-template-columns:1fr}}
+</style></head>
+<body><header><h1>TaskFlow</h1><p>Gestion des tâches — projet Kubernetes & AWS</p></header>
+<main>
+<section class="card"><h2>Créer une tâche</h2>
+<form id="form"><input id="title" placeholder="Titre" required><textarea id="description" placeholder="Description"></textarea><button>Ajouter</button></form></section>
+<section class="card"><h2>Mes tâches</h2><div id="tasks"></div></section>
+</main>
+<script>
+const api="/api";
+const esc=s=>String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+async function load(){let box=document.getElementById("tasks");try{
+let r=await fetch(api+"/tasks"), ts=await r.json();
+box.innerHTML=ts.length?ts.map(t=>`<div class="task"><div><b>${esc(t.title)}</b><br><small>${esc(t.description)}</small></div>
+<select onchange="status(${t.id},this.value)"><option value="todo" ${t.status=="todo"?"selected":""}>À faire</option><option value="doing" ${t.status=="doing"?"selected":""}>En cours</option><option value="done" ${t.status=="done"?"selected":""}>Terminée</option></select>
+<button class="delete" onclick="del(${t.id})">Supprimer</button></div>`).join(""):"<p>Aucune tâche.</p>";
+}catch(e){box.innerHTML="<p>API indisponible.</p>"}}
+document.getElementById("form").onsubmit=async e=>{e.preventDefault();await fetch(api+"/tasks",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:title.value,description:description.value})});e.target.reset();load()};
+async function status(id,s){await fetch(api+"/tasks/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:s})});load()}
+async function del(id){await fetch(api+"/tasks/"+id,{method:"DELETE"});load()} load();
+</script></body></html>

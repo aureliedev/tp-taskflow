@@ -1,0 +1,10 @@
+api:
+  image:
+    repository: ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/taskflow-api
+    tag: "1.0"
+frontend:
+  image:
+    repository: ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/taskflow-frontend
+    tag: "1.0"
+  service:
+    type: LoadBalancer

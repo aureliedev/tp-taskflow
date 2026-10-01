@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: taskflow-api, namespace: {{ .Values.namespace }}}
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  selector: {matchLabels: {app: taskflow-api}}
+  template:
+    metadata: {labels: {app: taskflow-api}}
+    spec:
+      containers:
+      - name: api
+        image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
+        imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+        env:
+        - {name: DB_HOST, value: postgres}
+        - {name: DB_PORT, value: "5432"}
+        - {name: DB_NAME, value: "{{ .Values.postgres.database }}"}
+        - {name: DB_USER, value: "{{ .Values.postgres.username }}"}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: taskflow-db, key: POSTGRES_PASSWORD}}
+        ports: [{containerPort: 8000}]
+        readinessProbe: {httpGet: {path: /api/health, port: 8000}}
+        livenessProbe: {httpGet: {path: /api/health, port: 8000}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: taskflow-api, namespace: {{ .Values.namespace }}}
+spec:
+  selector: {app: taskflow-api}
+  ports: [{port: {{ .Values.api.service.port }}, targetPort: 8000}]
